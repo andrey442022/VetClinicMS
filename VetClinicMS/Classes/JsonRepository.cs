@@ -1,39 +1,72 @@
-﻿using System.Text.Json;
+﻿using System.Data;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VetClinicMS.Interfaces;
 using VetClinicMS.Models;
 
 namespace VetClinicMS.Classes;
 
-public class MemoryRepository : IRepository
+public class JsonRepository : IRepository
 {
-    private ModelDB DB { get; set; } = new();
+    [NonSerialized] private string mainFilePath = "db.json";
+    public ModelDB DB { get; set; } = new ();
+    public JsonRepository()
+    {
+        if (File.Exists(mainFilePath))
+        {
+            var data = File.ReadAllText(mainFilePath);
+            DB = JsonSerializer.Deserialize<ModelDB>(data)!;
+        }
+    }
 
     public Guid AddVisit(Visit visit)
     {
+        if(visit.Procedures == null)
+            throw new NoNullAllowedException(nameof(visit.Procedures));
+        if(visit.Patient == null)
+            throw new NoNullAllowedException(nameof(visit.Patient));
+        if(visit.Patient.Owner == null)
+            throw new NoNullAllowedException(nameof(visit.Patient.Owner));
+        
         if (DB.procedures.Intersect(visit.Procedures).Count() != visit.Procedures.Count)
-        {
             throw new Exception("Procedure not found is repository");
-        }
-
+        
         visit.Id = Guid.NewGuid();
         DB.visits.Add(visit);
+        SaveToFile();
         return visit.Id;
     }
 
     public List<Visit> GetVisits()
     {
-        return DB.visits;
+        return DB.visits.ToList();
     }
 
-    public Visit? GetVisit(Guid id)
+    public List<Visit> GetVisits(Func<Visit, bool> prediction)
     {
-        return DB.visits.FirstOrDefault(item => item.Id == id);
+        return DB.visits.Where(prediction).ToList();
+    }
+
+    public Visit GetVisit(Guid id)
+    {
+        return DB.visits.First(item => item.Id == id);
+    }
+
+    public void UpdateVisit(Visit visit)
+    {
+        var  findIndex = DB.visits.FindIndex(item => item.Id == visit.Id);
+        if (findIndex == -1)
+            throw new Exception("Visit with id " + visit.Id + " not found");
+        
+        DB.visits[findIndex] = visit;
+        SaveToFile();
     }
 
     public Guid AddPet(Pet pet)
     {
         pet.Id = Guid.NewGuid();
         DB.pets.Add(pet);
+        SaveToFile();
         return pet.Id;
     }
 
@@ -51,6 +84,7 @@ public class MemoryRepository : IRepository
     {
         owner.Id = Guid.NewGuid();
         DB.owners.Add(owner);
+        SaveToFile();
         return owner.Id;
     }
 
@@ -78,6 +112,7 @@ public class MemoryRepository : IRepository
     {
         guid.Id = Guid.NewGuid();
         DB.procedures.Add(guid);
+        SaveToFile();
         return guid.Id;
     }
 
@@ -89,10 +124,29 @@ public class MemoryRepository : IRepository
 
         find.Name = procedure.Name;
         find.Price = procedure.Price;
+        SaveToFile();
     }
 
     public void DeleteProcedure(Procedure procedure)
     {
         DB.procedures.Remove(procedure);
+        SaveToFile();
+    }
+
+    public void AddLogsVisitStatusUpdate(VisitStatusLog log)
+    {
+        log.Id = Guid.NewGuid();
+        DB.visitStatusLogs.Add(log);
+        SaveToFile();
+    }
+
+    public List<VisitStatusLog> GetLogsVisitStatuses()
+    {
+        return DB.visitStatusLogs.ToList();
+    }
+
+    private void SaveToFile()
+    {
+        File.WriteAllText(mainFilePath, JsonSerializer.Serialize(DB));
     }
 }

@@ -6,7 +6,9 @@ public interface IRepository
 {
     public Guid AddVisit(Visit visit);
     public List<Visit> GetVisits();
+    public List<Visit> GetVisits(Func<Visit, bool> prediction);
     public Visit? GetVisit(Guid id);
+    public void UpdateVisit(Visit visit);
     
     public Guid AddPet(Pet pet);
     public List<Pet> GetPets();
@@ -21,4 +23,7 @@ public interface IRepository
     public Guid AddProcedure(Procedure procedure);
     public void UpdateProcedure(Procedure procedure);
     public void DeleteProcedure(Procedure procedure);
+
+    public void AddLogsVisitStatusUpdate(VisitStatusLog log);
+    public List<VisitStatusLog> GetLogsVisitStatuses();
 }
