@@ -21,4 +21,14 @@ public class PetService(IRepository repository)
         repository.AddPet(pet);
         return pet;
     }
+
+    public Pet? GetPet(Guid id)
+    {
+        return repository.GetPet(id);
+    }
+
+    public List<Pet> GetPets()
+    {
+        return repository.GetPets();
+    }
 }

@@ -20,4 +20,14 @@ public class OwnerService(IRepository rep)
         repository.AddOwner(owner);
         return owner;
     }
+
+    public Owner? GetOwner(Guid id)
+    {
+        return repository.GetOwner(id);
+    }
+
+    public List<Owner> GetOwners()
+    {
+        return repository.GetOwners();
+    }
 }

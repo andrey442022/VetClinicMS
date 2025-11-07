@@ -1,4 +1,5 @@
-﻿using VetClinicMS.Interfaces;
+﻿using System.Collections;
+using VetClinicMS.Interfaces;
 using VetClinicMS.Models;
 
 namespace VetClinicMS;
@@ -35,5 +36,45 @@ public class VisitService(IRepository repository)
         repository.AddVisit(visit);
 
         return visit;
+    }
+
+    private void ChangeStatus(Visit visit, VisitStatus newStatus)
+    {
+        if(visit == null)
+            throw new Exception("Visit not found");
+        
+        repository.AddLogsVisitStatusUpdate(new VisitStatusLog()
+        {
+            VisitId = visit.Id,
+            OldStatus = visit.Status,
+            NewStatus = newStatus
+        });
+        
+        visit.Status = newStatus;
+        repository.UpdateVisit(visit);
+    }
+
+    public void CloseVisit(Visit visit)
+    {
+        if (visit == null)
+            throw new Exception("Visit not found");
+        
+        if(visit.Procedures.Any(item=> !item.IsCompleted))
+            throw new Exception("Procedures not completed");
+
+        ChangeStatus(visit, VisitStatus.Completed);
+        visit.EndDate = DateTime.Now;
+        visit.Total = visit.Procedures.Sum(item => item.Price);
+        repository.UpdateVisit(visit);
+    }
+
+    public Visit? GetVisit(Guid visitId)
+    {
+        return repository.GetVisit(visitId);
+    }
+
+    public List<Visit> GetVisits()
+    {
+        return repository.GetVisits();
     }
 }
