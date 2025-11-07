@@ -27,4 +27,11 @@ public interface IRepository
 
     public void AddLogsVisitStatusUpdate(VisitStatusLog log);
     public List<VisitStatusLog> GetLogsVisitStatuses();
+    
+    public Guid AddVeterinarian(Veterinarian veterinarian);
+    public List<Veterinarian> GetVeterinarians();
+    public Veterinarian? GetVeterinarian(Guid id);
+    
+    public Guid AddPetPassport(PetPassport passport);
+    public List<PetPassport> GetPetPassports();
 }

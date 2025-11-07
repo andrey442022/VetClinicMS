@@ -7,4 +7,6 @@ public class ModelDB
     public List<Pet> pets { get; set; } = [];
     public List<Procedure> procedures { get; set; } = [];
     public List<VisitStatusLog> visitStatusLogs { get; set; } = [];
+    public List<Veterinarian> Veterinarians { get; set; } = [];
+    public List<PetPassport> PetPassports { get; set; } = [];
 }

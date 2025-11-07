@@ -150,6 +150,37 @@ public class JsonRepository : IRepository
         return DB.visitStatusLogs.ToList();
     }
 
+    public Guid AddVeterinarian(Veterinarian veterinarian)
+    {
+        veterinarian.Id = Guid.NewGuid();
+        DB.Veterinarians.Add(veterinarian);
+        SaveToFile();
+        return veterinarian.Id;
+    }
+
+    public List<Veterinarian> GetVeterinarians()
+    {
+        return DB.Veterinarians.ToList();
+    }
+
+    public Veterinarian? GetVeterinarian(Guid id)
+    {
+        return DB.Veterinarians.FirstOrDefault(item => item.Id == id);
+    }
+
+    public Guid AddPetPassport(PetPassport passport)
+    {
+        passport.Id =  Guid.NewGuid();
+        DB.PetPassports.Add(passport);
+        SaveToFile();
+        return passport.Id;
+    }
+
+    public List<PetPassport> GetPetPassports()
+    {
+        return DB.PetPassports.ToList();
+    }
+
     private void SaveToFile()
     {
         File.WriteAllText(mainFilePath, JsonSerializer.Serialize(DB));
