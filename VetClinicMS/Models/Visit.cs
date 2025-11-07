@@ -7,9 +7,9 @@ public class Visit
     public VisitStatus Status { get; set; }
     public Pet Patient { get; set; }
     public List<Procedure> Procedures { get; set; }
-    
     public DateTime? EndDate { get; set; }
     public decimal Total { get; set; }
+    public string Office { get; set; }
 }
 
 public enum VisitStatus

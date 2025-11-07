@@ -6,4 +6,7 @@ public class Procedure
     public string Name { get; set; }
     public decimal Price { get; set; }
     public bool IsCompleted { get; set; }
+    public bool IsBlocked { get; set; }
+    public decimal CostPrice { get; set; }
+    public List<string> Tags { get; set; }
 }

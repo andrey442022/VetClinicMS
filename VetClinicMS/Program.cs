@@ -14,11 +14,12 @@ static class Program
     private static PetService petService = null!;
     private static OwnerService ownerService = null!;
     private static StatiscitcsService statiscticsService = null!;
+
     static void Main()
     {
         Console.InputEncoding = System.Text.Encoding.UTF8;
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        
+
         repository = new JsonRepository();
         procedureService = new ProcedureService(repository);
         visitService = new VisitService(repository);
@@ -30,6 +31,7 @@ static class Program
         {
             procedureService.CreateProcedure("Вакцинація", 500);
         }
+
         if (procedureService.GetProcedures().All(p => p.Name != "Огляд"))
         {
             procedureService.CreateProcedure("Огляд", 300);
@@ -37,7 +39,7 @@ static class Program
 
         RunMainMenu();
     }
-    
+
     private static void RunMainMenu()
     {
         while (true)
@@ -48,7 +50,8 @@ static class Program
             Console.WriteLine("2. Додати нову тварину");
             Console.WriteLine("3. Записати на візит");
             Console.WriteLine("4. Закриття візиту");
-            Console.WriteLine("5. Переглянути статистику за день");
+            Console.WriteLine("5. Переглянути статистику");
+            Console.WriteLine("6. Блокування/Розблокування процедури");
             Console.WriteLine("9. Вихід");
             Console.Write("\nОберіть опцію: ");
 
@@ -69,7 +72,10 @@ static class Program
                     CloseVisit();
                     break;
                 case "5":
-                    ShowDayStatistics();
+                    ShowMenuStatistics();
+                    break;
+                case "6":
+                    BlockProcedures();
                     break;
                 case "9":
                     Console.WriteLine("Дякуємо за використання! Вихід...");
@@ -82,35 +88,145 @@ static class Program
         }
     }
 
+    private static void ShowMenuStatistics()
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("---  🏥 Система управління ветеринарною клінікою ---");
+            Console.WriteLine("---              📈 Перегляд статистики          ---");
+            Console.WriteLine("1. Перегляд статистики за період");
+            Console.WriteLine("2. Перегляд статистики по кабінетам");
+            Console.WriteLine("9. Вихід");
+            Console.Write("\nОберіть опцію: ");
+
+            string? choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    ShowStatisticsForPeriod();
+                    break;
+                case "2":
+                    ShowStatisticsForOffice();
+                    break;
+                case "9":
+                    Console.WriteLine("Повернення на головне меню...");
+                    return;
+                default:
+                    Console.WriteLine("Невірний вибір. Натисніть [Enter] для повторної спроби.");
+                    Console.ReadLine();
+                    break;
+            }
+        }
+    }
+
+    private static void ShowStatisticsForOffice()
+    {
+        Console.Clear();
+        Console.WriteLine("--- 🏢 Статистика по кабінету ---");
+        
+        Console.Write("Введіть номер кабінету: ");
+        var office = Console.ReadLine() ?? "101";
+        
+        Console.Write("Введіть дату: ");
+        var dateString = Console.ReadLine();
+
+        var date = DateTime.Now;
+
+        if (DateTime.TryParse(dateString, out var parseDate))
+            date = parseDate;
+
+        var statistics = statiscticsService.GetCabinetStatiscitc(office, date);
+
+        Console.WriteLine(
+            $"\nСтатистика по кабінету {office} за {date.ToShortDateString()}:" +
+            $"\n    Усього візитів {statistics.count}" +
+            $"\n    Середній час візиту {Math.Round(statistics.average / 60)} хвилин" +
+            $"\n    Завантаженість кабінету {statistics.util}%");
+        
+        PauseScreen();
+    }
+
+    private static void ShowStatisticsForPeriod()
+    {
+        Console.Clear();
+        Console.WriteLine("--- 📅 Статистика за період ---");
+        
+        Console.WriteLine("За день - 0");
+        Console.WriteLine("За тиждень - 1");
+        Console.WriteLine("За місяць - 2");
+        Console.WriteLine("За рік - 3");
+        
+        Console.Write("Оберіть опцію: ");
+        var input = Console.ReadLine() ?? "0";
+
+        var start = DateTime.Today;
+        var end = input switch
+        {
+            "1" => start.AddDays(7),
+            "2" => start.AddMonths(1),
+            "3" => start.AddYears(1),
+            _ => start.AddDays(1)
+        };
+
+        var statistics = statiscticsService.GetTotalSumAndCountVisitsForPeriod(start, end);
+
+        Console.WriteLine($"Статистика за період: з {start.ToShortDateString()} по {end.ToShortDateString()}");
+        Console.WriteLine($"Усього закрито візитів {statistics.count}, на суму: {statistics.total}");
+        
+        PauseScreen();
+    }
+
+    private static void BlockProcedures()
+    {
+        Console.Clear();
+        Console.WriteLine("--- 🔑 Блокування/Розблокування процедури ---");
+
+        var procedure = FindProcedure();
+        if (procedure == null) return;
+
+        Console.WriteLine($"\nОбрано процедуру: {procedure.Name}");
+
+        Console.Write("Заблокувати - 1, Розблокувати - 0: ");
+        var input = Console.ReadLine() ?? "0";
+
+        procedure.IsBlocked = input == "1";
+        procedureService.UpdateProcedure(procedure);
+        Console.WriteLine(procedure.IsBlocked ? $"\n✅ Процедура заблокована!" : $"\n✅ Процедура розблокована!");
+        
+        PauseScreen();
+    }
+
     private static void CloseVisit()
     {
         Console.Clear();
         Console.WriteLine("--- ❎ Закритя візиту ---");
-        
+
         var visit = FindVisit();
         if (visit == null) return; // Пошук скасовано або не вдався
 
         Console.WriteLine($"\nОбрано візит: {visit.Date}");
-        
+
         visit.Procedures.ForEach(item => item.IsCompleted = true);
-        
+
         visitService.CloseVisit(visit);
-        
+
         Console.WriteLine($"\n✅ Візит успішно закрито!");
-       
+
         PauseScreen();
     }
-    
+
     private static void AddNewOwner()
     {
         Console.Clear();
         Console.WriteLine("--- 👤 Додавання нового власника ---");
 
         Console.Write("Введіть ПІБ: ");
-        string name = Console.ReadLine() ?? "N/A";
+        var name = Console.ReadLine() ?? "N/A";
 
         Console.Write("Введіть телефон: ");
-        string phone = Console.ReadLine() ?? "N/A";
+        var phone = Console.ReadLine() ?? "N/A";
 
         var owner = ownerService.RegisterOwner(name, phone);
 
@@ -119,25 +235,25 @@ static class Program
         Console.WriteLine($"   ПІБ: {owner.FullName}");
         PauseScreen();
     }
-    
+
     private static void AddNewPet()
     {
         Console.Clear();
         Console.WriteLine("--- 🐶 Додавання нової тварини ---");
-        
+
         var owner = FindOwner();
         if (owner == null) return;
 
         Console.WriteLine($"\nОбрано власника: {owner.FullName}");
-        
+
         Console.Write("Введіть кличку тварини: ");
-        string name = Console.ReadLine() ?? "N/A";
+        var name = Console.ReadLine() ?? "N/A";
 
         Console.Write("Введіть вид (напр., 'Собака', 'Кіт'): ");
-        string type = Console.ReadLine() ?? "N/A";
-        
+        var type = Console.ReadLine() ?? "N/A";
+
         Console.Write("Введіть породу: ");
-        string breed = Console.ReadLine() ?? "N/A";
+        var breed = Console.ReadLine() ?? "N/A";
 
         int age = 0;
         while (true)
@@ -147,29 +263,30 @@ static class Program
             {
                 break;
             }
+
             Console.WriteLine("Невірний формат. Введіть число.");
         }
-        
+
         var pet = petService.RegisterPet(name, type, breed, age, owner);
-        
+
         Console.WriteLine($"\n✅ Успішно зареєстровано тварину!");
         Console.WriteLine($"   ID: {pet.Id}");
         Console.WriteLine($"   Кличка: {pet.Name}");
         Console.WriteLine($"   Власник: {pet.Owner.FullName}");
         PauseScreen();
     }
-    
+
     private static void CreateNewVisit()
     {
         Console.Clear();
         Console.WriteLine("--- 📅 Створення нового візиту ---");
-        
+
         var pet = FindPet();
         if (pet == null) return;
 
         Console.WriteLine($"\nОбрано пацієнта: {pet.Name} (Власник: {pet.Owner.FullName})");
-        
-        var allProcedures = procedureService.GetProcedures();
+
+        var allProcedures = procedureService.GetActualProcedures();
         var proceduresForVisit = new List<Procedure>();
 
         while (true)
@@ -179,9 +296,11 @@ static class Program
             {
                 Console.WriteLine($"  {i + 1}. {allProcedures[i].Name} ({allProcedures[i].Price:C})");
             }
+
             Console.Write("\nОберіть процедуру (введіть номер, або 0 для завершення): ");
-            
-            if (int.TryParse(Console.ReadLine(), out int procChoice) && procChoice > 0 && procChoice <= allProcedures.Count)
+
+            if (int.TryParse(Console.ReadLine(), out int procChoice) && procChoice > 0 &&
+                procChoice <= allProcedures.Count)
             {
                 var chosenProc = allProcedures[procChoice - 1];
                 if (!proceduresForVisit.Contains(chosenProc))
@@ -210,21 +329,31 @@ static class Program
                 Console.WriteLine("Невірний номер.");
             }
         }
-        
-        var newVisit = visitService.AddVisit(pet, proceduresForVisit, DateTime.Now);
+
+        Console.Write("Введіть номер кабінет: ");
+        var office = Console.ReadLine() ?? "N/A";
+
+        Console.Write("Введіть дату візита: ");
+        var dateString = Console.ReadLine();
+
+        var date = DateTime.Now;
+
+        if (DateTime.TryParse(dateString, out var parseDate))
+            date = parseDate;
+
+        var newVisit = visitService.AddVisit(pet, proceduresForVisit, date, office);
 
         Console.WriteLine($"\n✅ Успішно створено візит!");
         Console.WriteLine($"   ID візиту: {newVisit.Id}");
         Console.WriteLine($"   Статус: {newVisit.Status}");
-        Console.WriteLine($"   Загальна вартість: {newVisit.Total:C}");
         PauseScreen();
     }
-    
+
     private static void ShowDayStatistics()
     {
         Console.Clear();
         Console.WriteLine("--- 📊 Статистика за день ---");
-        
+
         DateTime date;
         while (true)
         {
@@ -236,11 +365,13 @@ static class Program
                 date = DateTime.Today;
                 break;
             }
-            
-            if (DateTime.TryParseExact(dateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+
+            if (DateTime.TryParseExact(dateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None,
+                    out date))
             {
                 break;
             }
+
             Console.WriteLine("Невірний формат дати. Спробуйте ще раз (напр., 25.10.2025).");
         }
 
@@ -249,7 +380,7 @@ static class Program
         Console.WriteLine($"\nЗагальний дохід за {date:dd.MM.yyyy}: {total:C}");
         PauseScreen();
     }
-    
+
     private static Owner? FindOwner()
     {
         while (true)
@@ -258,6 +389,7 @@ static class Program
             {
                 Console.WriteLine($"Власника: {owner.FullName} ({owner.Id})");
             }
+
             Console.Write("Введіть ID власника (або 'q' для виходу): ");
             string? input = Console.ReadLine();
 
@@ -265,11 +397,12 @@ static class Program
 
             if (Guid.TryParse(input, out Guid ownerId))
             {
-                var owner = ownerService.GetOwner(ownerId); 
+                var owner = ownerService.GetOwner(ownerId);
                 if (owner != null)
                 {
                     return owner;
                 }
+
                 Console.WriteLine("Власника з таким ID не знайдено.");
             }
             else
@@ -278,7 +411,7 @@ static class Program
             }
         }
     }
-    
+
     private static Pet? FindPet()
     {
         while (true)
@@ -287,6 +420,7 @@ static class Program
             {
                 Console.WriteLine($"Пацієнта: {pet.Name} (Власник: {pet.Owner.FullName}) ({pet.Id})");
             }
+
             Console.Write("Введіть ID тварини (або 'q' для виходу): ");
             string? input = Console.ReadLine();
 
@@ -299,6 +433,7 @@ static class Program
                 {
                     return pet;
                 }
+
                 Console.WriteLine("Тварину з таким ID не знайдено.");
             }
             else
@@ -307,7 +442,7 @@ static class Program
             }
         }
     }
-    
+
     private static Visit? FindVisit()
     {
         while (true)
@@ -316,6 +451,7 @@ static class Program
             {
                 Console.WriteLine($"Візит паціента {visit.Patient.Name}, дата: {visit.Date} ({visit.Id})");
             }
+
             Console.Write("Введіть ID візиту (або 'q' для виходу): ");
             string? input = Console.ReadLine();
 
@@ -323,11 +459,12 @@ static class Program
 
             if (Guid.TryParse(input, out Guid visitId))
             {
-                var owner = visitService.GetVisit(visitId); 
+                var owner = visitService.GetVisit(visitId);
                 if (owner != null)
                 {
                     return owner;
                 }
+
                 Console.WriteLine("Візит з таким ID не знайдено.");
             }
             else
@@ -336,7 +473,38 @@ static class Program
             }
         }
     }
-    
+
+    public static Procedure? FindProcedure()
+    {
+        while (true)
+        {
+            foreach (var procedure in procedureService.GetProcedures())
+            {
+                Console.WriteLine($"Процедура {procedure.Name} ({procedure.Id})");
+            }
+
+            Console.Write("Введіть ID процедури (або 'q' для виходу): ");
+            string? input = Console.ReadLine();
+
+            if (input?.ToLower() == "q") return null;
+
+            if (Guid.TryParse(input, out Guid procedureId))
+            {
+                var procedure = procedureService.GetProcedure(procedureId);
+                if (procedure != null)
+                {
+                    return procedure;
+                }
+
+                Console.WriteLine("Процедура з таким ID не знайдено.");
+            }
+            else
+            {
+                Console.WriteLine("Невірний формат ID.");
+            }
+        }
+    }
+
     private static void PauseScreen()
     {
         Console.WriteLine("\nНатисніть [Enter] для продовження...");

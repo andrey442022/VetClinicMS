@@ -10,6 +10,11 @@ public class ProcedureService(IRepository repository)
         return repository.GetProcedures();
     }
 
+    public List<Procedure> GetActualProcedures()
+    {
+        return repository.GetProcedures(item => !item.IsBlocked);
+    }
+
     public Procedure? GetProcedure(Guid id)
     {
         return repository.GetProcedure(id);
@@ -21,7 +26,7 @@ public class ProcedureService(IRepository repository)
         {
             throw new Exception("Name is required");
         }
-        
+
         if (price == 0)
         {
             throw new Exception("Price is required");
