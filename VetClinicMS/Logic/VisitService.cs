@@ -8,7 +8,7 @@ public class VisitService(IRepository repository)
 {
     private IRepository repository = repository;
 
-    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate)
+    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate, string office)
     {
         if (procedures == null || procedures.Count == 0)
             throw new ArgumentNullException(nameof(procedures));
@@ -30,7 +30,8 @@ public class VisitService(IRepository repository)
             Date = visitDate,
             Patient = patient,
             Procedures = procedures,
-            Status = VisitStatus.Registered
+            Status = VisitStatus.Registered,
+            Office = office
         };
         
         repository.AddVisit(visit);

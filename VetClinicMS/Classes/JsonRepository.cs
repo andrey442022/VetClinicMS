@@ -103,6 +103,11 @@ public class JsonRepository : IRepository
         return DB.procedures.ToList();
     }
 
+    public List<Procedure> GetProcedures(Func<Procedure, bool> prediction)
+    {
+        return DB.procedures.Where(prediction).ToList();
+    }
+
     public Procedure? GetProcedure(Guid id)
     {
         return DB.procedures.FirstOrDefault(item => item.Id == id);

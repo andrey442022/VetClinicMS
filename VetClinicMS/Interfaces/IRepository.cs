@@ -19,6 +19,7 @@ public interface IRepository
     public Owner? GetOwner(Guid id);
     
     public List<Procedure> GetProcedures();
+    public List<Procedure> GetProcedures(Func<Procedure, bool> prediction);
     public Procedure? GetProcedure(Guid id);
     public Guid AddProcedure(Procedure procedure);
     public void UpdateProcedure(Procedure procedure);
