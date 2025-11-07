@@ -8,7 +8,7 @@ public class VisitService(IRepository repository)
 {
     private IRepository repository = repository;
 
-    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate, string office)
+    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate, string office, Veterinarian veterinarian)
     {
         if (procedures == null || procedures.Count == 0)
             throw new ArgumentNullException(nameof(procedures));
@@ -31,7 +31,8 @@ public class VisitService(IRepository repository)
             Patient = patient,
             Procedures = procedures,
             Status = VisitStatus.Registered,
-            Office = office
+            Office = office,
+            Veterinarian = veterinarian
         };
         
         repository.AddVisit(visit);
@@ -77,5 +78,10 @@ public class VisitService(IRepository repository)
     public List<Visit> GetVisits()
     {
         return repository.GetVisits();
+    }
+    
+    public List<Visit> GetVisits(Func<Visit, bool> prediction)
+    {
+        return repository.GetVisits(prediction);
     }
 }

@@ -10,6 +10,7 @@ public class Visit
     public DateTime? EndDate { get; set; }
     public decimal Total { get; set; }
     public string Office { get; set; }
+    public Veterinarian Veterinarian { get; set; }
 }
 
 public enum VisitStatus
