@@ -27,14 +27,14 @@ public class StatiscitcsService(IRepository repository)
         var allVisits = repository.GetVisits(item =>
             item.Office == cabinetNumber &&
             item.Status == VisitStatus.Completed &&
-            item.Date == targetDate.Date
+            item.Date.Date == targetDate.Date
         );
 
         if (allVisits.Count == 0) return (0, 0, 0);
 
         var totalBusyHours = allVisits.Select(visit => visit.EndDate!.Value - visit.Date)
             .Select(duration => duration.TotalHours).Sum();
-        var average = allVisits.Average(item => (item.Date - item.Date).TotalSeconds);
+        var average = allVisits.Average(item => (item.EndDate!.Value - item.Date).TotalSeconds);
 
         var utilization = (totalBusyHours / workingHoursPerDay) * 100.0;
 
@@ -47,7 +47,7 @@ public class StatiscitcsService(IRepository repository)
         var allVisits = repository.GetVisits(item =>
             item.Veterinarian.Id == veterinarian.Id &&
             (item.Date.Date >= start.Date && item.Date.Date <= end.Date) &&
-            item.EndDate is not null
+            item.Status == VisitStatus.Completed
         );
 
         var average = allVisits.Average(item => (item.EndDate!.Value - item.Date).TotalSeconds);
@@ -60,7 +60,7 @@ public class StatiscitcsService(IRepository repository)
     {
         var allVisits = repository.GetVisits(item =>
             (item.Date.Date >= start.Date && item.Date.Date <= end.Date) &&
-            item.EndDate is not null
+            item.Status == VisitStatus.Completed
         );
 
         var procedureGroups = allVisits
