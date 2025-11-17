@@ -28,7 +28,7 @@ public class JsonRepository : IRepository
         if(visit.Patient.Owner == null)
             throw new NoNullAllowedException(nameof(visit.Patient.Owner));
         
-        if (DB.procedures.Intersect(visit.Procedures).Count() != visit.Procedures.Count)
+        if (DB.procedures.Intersect(visit.Procedures.Select(item => item.Procedure)).Count() != visit.Procedures.Count)
             throw new Exception("Procedure not found is repository");
         
         visit.Id = Guid.NewGuid();

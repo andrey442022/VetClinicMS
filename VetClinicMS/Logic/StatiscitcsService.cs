@@ -65,13 +65,13 @@ public class StatiscitcsService(IRepository repository)
 
         var procedureGroups = allVisits
             .SelectMany(visit => visit.Procedures)
-            .GroupBy(proc => proc.Id);
+            .GroupBy(proc => proc.Procedure.Id);
 
         var aggregatedData = procedureGroups.Select(g => new
         {
-            Procedure = g.First(),          // Беремо сам об'єкт Procedure (він однаковий для всіх в групі)
+            Procedure = g.First().Procedure,          // Беремо сам об'єкт Procedure (він однаковий для всіх в групі)
             Count = g.Count(),              // Ефективно рахуємо кількість елементів в групі
-            TotalSum = g.Sum(p => p.Price)  // Сумуємо вартість в межах групи
+            TotalSum = g.Sum(p => p.Procedure.Price)  // Сумуємо вартість в межах групи
         }).ToList();
         
         var orderUses = aggregatedData
