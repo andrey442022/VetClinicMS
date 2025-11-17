@@ -22,7 +22,7 @@ static class Program
         Console.InputEncoding = System.Text.Encoding.UTF8;
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-        repository = new JsonRepository();
+        repository = new DbRepository();
         procedureService = new ProcedureService(repository);
         visitService = new VisitService(repository);
         petService = new PetService(repository);

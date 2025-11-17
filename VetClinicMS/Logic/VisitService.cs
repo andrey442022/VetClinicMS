@@ -29,7 +29,7 @@ public class VisitService(IRepository repository)
         {
             Date = visitDate,
             Patient = patient,
-            Procedures = procedures,
+            Procedures = procedures.Select(item => new ProcedureVisit(){Procedure = item}).ToList(),
             Status = VisitStatus.Registered,
             Office = office,
             Veterinarian = veterinarian
@@ -66,7 +66,7 @@ public class VisitService(IRepository repository)
 
         ChangeStatus(visit, VisitStatus.Completed);
         visit.EndDate = DateTime.Now;
-        visit.Total = visit.Procedures.Sum(item => item.Price);
+        visit.Total = visit.Procedures.Sum(item => item.Procedure.Price);
         repository.UpdateVisit(visit);
     }
 
