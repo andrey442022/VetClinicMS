@@ -1,8 +1,10 @@
-﻿namespace VetClinicMS.Models;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace VetClinicMS.Models;
 
 public class Visit
 {
-    public System.Guid Id { get; set; }
+    public Guid Id { get; set; }
     public DateTime Date { get; set; }
     public VisitStatus Status { get; set; }
     public Pet Patient { get; set; }

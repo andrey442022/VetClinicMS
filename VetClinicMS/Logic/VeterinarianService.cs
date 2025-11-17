@@ -7,7 +7,7 @@ public class VeterinarianService(IRepository repository)
 {
     public Veterinarian CreateVeterinarian(string name, string specialization)
     {
-        var veterinarian = new Veterinarian()
+        var veterinarian = new Veterinarian
         {
             FullName = name,
             Specialization = specialization

@@ -3,7 +3,7 @@ using VetClinicMS.Models;
 
 namespace VetClinicMS.Logic;
 
-public class StatiscitcsService(IRepository repository)
+public class StatisticsService(IRepository repository)
 {
     public decimal TotalSumForDay(DateTime date)
     {
@@ -14,6 +14,7 @@ public class StatiscitcsService(IRepository repository)
     public (decimal total, int count) GetTotalSumAndCountVisitsForPeriod(DateTime start, DateTime end)
     {
         var visits = repository.GetVisits(item =>
+            item.Status == VisitStatus.Completed &&
             item.EndDate != null && item.EndDate.Value.Date >= start && item.EndDate.Value.Date <= end);
         var total = visits.Sum(item => item.Total);
         return (total, visits.Count);
@@ -36,7 +37,7 @@ public class StatiscitcsService(IRepository repository)
             .Select(duration => duration.TotalHours).Sum();
         var average = allVisits.Average(item => (item.EndDate!.Value - item.Date).TotalSeconds);
 
-        var utilization = (totalBusyHours / workingHoursPerDay) * 100.0;
+        var utilization = totalBusyHours / workingHoursPerDay * 100.0;
 
         return (allVisits.Count, average, Math.Round(utilization, 2));
     }
@@ -46,7 +47,7 @@ public class StatiscitcsService(IRepository repository)
     {
         var allVisits = repository.GetVisits(item =>
             item.Veterinarian.Id == veterinarian.Id &&
-            (item.Date.Date >= start.Date && item.Date.Date <= end.Date) &&
+            item.Date.Date >= start.Date && item.Date.Date <= end.Date &&
             item.Status == VisitStatus.Completed
         );
 
@@ -55,11 +56,12 @@ public class StatiscitcsService(IRepository repository)
         return (allVisits.Count, allVisits.Sum(item => item.Total), average);
     }
 
-    public (Dictionary<Procedure, int> mostUses, Dictionary<Procedure, decimal> mostExpensive) GetProceduresStatistics(DateTime start,
+    public (Dictionary<Procedure, int> mostUses, Dictionary<Procedure, decimal> mostExpensive) GetProceduresStatistics(
+        DateTime start,
         DateTime end)
     {
         var allVisits = repository.GetVisits(item =>
-            (item.Date.Date >= start.Date && item.Date.Date <= end.Date) &&
+            item.Date.Date >= start.Date && item.Date.Date <= end.Date &&
             item.Status == VisitStatus.Completed
         );
 
@@ -69,11 +71,11 @@ public class StatiscitcsService(IRepository repository)
 
         var aggregatedData = procedureGroups.Select(g => new
         {
-            Procedure = g.First().Procedure,          // Беремо сам об'єкт Procedure (він однаковий для всіх в групі)
-            Count = g.Count(),              // Ефективно рахуємо кількість елементів в групі
-            TotalSum = g.Sum(p => p.Procedure.Price)  // Сумуємо вартість в межах групи
+            g.First().Procedure, // Беремо сам об'єкт Procedure (він однаковий для всіх в групі)
+            Count = g.Count(), // Ефективно рахуємо кількість елементів в групі
+            TotalSum = g.Sum(p => p.Procedure.Price) // Сумуємо вартість в межах групи
         }).ToList();
-        
+
         var orderUses = aggregatedData
             .OrderByDescending(item => item.Count)
             .ToDictionary(item => item.Procedure, item => item.Count);
@@ -83,5 +85,28 @@ public class StatiscitcsService(IRepository repository)
             .ToDictionary(item => item.Procedure, item => item.TotalSum);
 
         return (orderUses, orderExpensive);
+    }
+
+    public List<(Procedure procedure, int count, decimal sum)> GetProceduresStatisticsList(
+        DateTime start,
+        DateTime end)
+    {
+        var allVisits = repository.GetVisits(item =>
+            item.Date.Date >= start.Date && item.Date.Date <= end.Date &&
+            item.Status == VisitStatus.Completed
+        );
+
+        var procedureGroups = allVisits
+            .SelectMany(visit => visit.Procedures)
+            .GroupBy(proc => proc.Procedure.Id);
+
+        var aggregatedData = procedureGroups.Select(g =>
+        (
+            g.First().Procedure, // Беремо сам об'єкт Procedure (він однаковий для всіх в групі)
+            g.Count(), // Ефективно рахуємо кількість елементів в групі
+            g.Sum(p => p.Procedure.Price) // Сумуємо вартість в межах групи
+        )).ToList();
+
+        return aggregatedData;
     }
 }

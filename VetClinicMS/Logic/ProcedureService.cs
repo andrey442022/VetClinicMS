@@ -1,7 +1,7 @@
 ﻿using VetClinicMS.Interfaces;
 using VetClinicMS.Models;
 
-namespace VetClinicMS;
+namespace VetClinicMS.Logic;
 
 public class ProcedureService(IRepository repository)
 {
@@ -20,22 +20,18 @@ public class ProcedureService(IRepository repository)
         return repository.GetProcedure(id);
     }
 
-    public Procedure CreateProcedure(string name, decimal price)
+    public Procedure CreateProcedure(string name, decimal price, decimal costPrice = 0, List<string>? tags = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new Exception("Name is required");
-        }
+        if (string.IsNullOrEmpty(name)) throw new Exception("Name is required");
 
-        if (price == 0)
-        {
-            throw new Exception("Price is required");
-        }
+        if (price == 0) throw new Exception("Price is required");
 
-        var procedure = new Procedure()
+        var procedure = new Procedure
         {
             Name = name,
-            Price = price
+            Price = price,
+            CostPrice = costPrice,
+            Tags = tags
         };
         repository.AddProcedure(procedure);
         return procedure;

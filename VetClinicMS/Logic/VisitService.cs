@@ -1,14 +1,14 @@
-﻿using System.Collections;
-using VetClinicMS.Interfaces;
+﻿using VetClinicMS.Interfaces;
 using VetClinicMS.Models;
 
-namespace VetClinicMS;
+namespace VetClinicMS.Logic;
 
 public class VisitService(IRepository repository)
 {
-    private IRepository repository = repository;
+    private readonly IRepository repository = repository;
 
-    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate, string office, Veterinarian veterinarian)
+    public Visit AddVisit(Pet patient, List<Procedure> procedures, DateTime visitDate, string office,
+        Veterinarian veterinarian)
     {
         if (procedures == null || procedures.Count == 0)
             throw new ArgumentNullException(nameof(procedures));
@@ -29,12 +29,12 @@ public class VisitService(IRepository repository)
         {
             Date = visitDate,
             Patient = patient,
-            Procedures = procedures.Select(item => new ProcedureVisit(){Procedure = item}).ToList(),
+            Procedures = procedures.Select(item => new ProcedureVisit {Procedure = item}).ToList(),
             Status = VisitStatus.Registered,
             Office = office,
             Veterinarian = veterinarian
         };
-        
+
         repository.AddVisit(visit);
 
         return visit;
@@ -42,16 +42,16 @@ public class VisitService(IRepository repository)
 
     private void ChangeStatus(Visit visit, VisitStatus newStatus)
     {
-        if(visit == null)
+        if (visit == null)
             throw new Exception("Visit not found");
-        
-        repository.AddLogsVisitStatusUpdate(new VisitStatusLog()
+
+        repository.AddLogsVisitStatusUpdate(new VisitStatusLog
         {
             VisitId = visit.Id,
             OldStatus = visit.Status,
             NewStatus = newStatus
         });
-        
+
         visit.Status = newStatus;
         repository.UpdateVisit(visit);
     }
@@ -60,8 +60,8 @@ public class VisitService(IRepository repository)
     {
         if (visit == null)
             throw new Exception("Visit not found");
-        
-        if(visit.Procedures.Any(item=> !item.IsCompleted))
+
+        if (visit.Procedures.Any(item => !item.IsCompleted))
             throw new Exception("Procedures not completed");
 
         ChangeStatus(visit, VisitStatus.Completed);
@@ -79,9 +79,14 @@ public class VisitService(IRepository repository)
     {
         return repository.GetVisits();
     }
-    
+
     public List<Visit> GetVisits(Func<Visit, bool> prediction)
     {
         return repository.GetVisits(prediction);
+    }
+
+    public void UpdateVisit(Visit selectVisit)
+    {
+        repository.UpdateVisit(selectVisit);
     }
 }
