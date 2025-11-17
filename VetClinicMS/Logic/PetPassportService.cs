@@ -7,7 +7,7 @@ public class PetPassportService(IRepository repository)
 {
     public PetPassport CreatePetPassport(Pet pet, Owner owner, List<string> issues)
     {
-        var passport = new PetPassport()
+        var passport = new PetPassport
         {
             Pet = pet,
             Owner = owner,

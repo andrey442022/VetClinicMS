@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using VetClinicMS.Interfaces;
 using VetClinicMS.Models;
 
@@ -8,8 +7,8 @@ namespace VetClinicMS.Classes;
 
 public class JsonRepository : IRepository
 {
-    [NonSerialized] private string mainFilePath = "db.json";
-    public ModelDB DB { get; set; } = new ();
+    [NonSerialized] private readonly string mainFilePath = "db.json";
+
     public JsonRepository()
     {
         if (File.Exists(mainFilePath))
@@ -19,18 +18,20 @@ public class JsonRepository : IRepository
         }
     }
 
+    public ModelDB DB { get; set; } = new();
+
     public Guid AddVisit(Visit visit)
     {
-        if(visit.Procedures == null)
+        if (visit.Procedures == null)
             throw new NoNullAllowedException(nameof(visit.Procedures));
-        if(visit.Patient == null)
+        if (visit.Patient == null)
             throw new NoNullAllowedException(nameof(visit.Patient));
-        if(visit.Patient.Owner == null)
+        if (visit.Patient.Owner == null)
             throw new NoNullAllowedException(nameof(visit.Patient.Owner));
-        
+
         if (DB.procedures.Intersect(visit.Procedures.Select(item => item.Procedure)).Count() != visit.Procedures.Count)
             throw new Exception("Procedure not found is repository");
-        
+
         visit.Id = Guid.NewGuid();
         DB.visits.Add(visit);
         SaveToFile();
@@ -54,10 +55,10 @@ public class JsonRepository : IRepository
 
     public void UpdateVisit(Visit visit)
     {
-        var  findIndex = DB.visits.FindIndex(item => item.Id == visit.Id);
+        var findIndex = DB.visits.FindIndex(item => item.Id == visit.Id);
         if (findIndex == -1)
             throw new Exception("Visit with id " + visit.Id + " not found");
-        
+
         DB.visits[findIndex] = visit;
         SaveToFile();
     }
@@ -170,7 +171,7 @@ public class JsonRepository : IRepository
 
     public Guid AddPetPassport(PetPassport passport)
     {
-        passport.Id =  Guid.NewGuid();
+        passport.Id = Guid.NewGuid();
         DB.PetPassports.Add(passport);
         SaveToFile();
         return passport.Id;

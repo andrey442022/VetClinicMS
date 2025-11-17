@@ -6,12 +6,22 @@ namespace VetClinicMS.Classes;
 
 public class DbRepository : IRepository, IDisposable, IAsyncDisposable
 {
-    private DbMainContext dbContext = new();
+    private readonly DbMainContext dbContext = new();
 
     public DbRepository()
     {
         dbContext.Database.EnsureCreated();
         dbContext.Database.ExecuteSql($"PRAGMA journal_mode = WLA");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await dbContext.DisposeAsync();
+    }
+
+    public void Dispose()
+    {
+        dbContext.Dispose();
     }
 
     public Guid AddVisit(Visit visit)
@@ -28,12 +38,22 @@ public class DbRepository : IRepository, IDisposable, IAsyncDisposable
 
     public List<Visit> GetVisits(Func<Visit, bool> prediction)
     {
-        return dbContext.Visits.Include(item => item.Procedures).Where(prediction).ToList();
+        return dbContext.Visits
+            .Include(item => item.Procedures)
+            .Include(item => item.Veterinarian)
+            .Include(item => item.Patient)
+            .Include(item => item.Patient.Owner)
+            .Where(prediction).ToList();
     }
 
     public Visit? GetVisit(Guid id)
     {
-        return  dbContext.Visits.FirstOrDefault(v => v.Id == id);
+        return dbContext.Visits
+            .Include(item => item.Procedures)
+            .Include(item => item.Veterinarian)
+            .Include(item => item.Patient)
+            .Include(item => item.Patient.Owner)
+            .FirstOrDefault(v => v.Id == id);
     }
 
     public void UpdateVisit(Visit visit)
@@ -83,7 +103,7 @@ public class DbRepository : IRepository, IDisposable, IAsyncDisposable
 
     public List<Procedure> GetProcedures(Func<Procedure, bool> prediction)
     {
-       return dbContext.Procedures.Where(prediction).ToList();
+        return dbContext.Procedures.Where(prediction).ToList();
     }
 
     public Procedure? GetProcedure(Guid id)
@@ -148,15 +168,5 @@ public class DbRepository : IRepository, IDisposable, IAsyncDisposable
     public List<PetPassport> GetPetPassports()
     {
         return dbContext.PetPassports.ToList();
-    }
-
-    public void Dispose()
-    {
-        dbContext.Dispose();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await dbContext.DisposeAsync();
     }
 }

@@ -12,10 +12,9 @@ public class DbMainContext : DbContext
     public DbSet<VisitStatusLog> VisitStatusLogs { get; set; }
     public DbSet<Veterinarian> Veterinarians { get; set; }
     public DbSet<PetPassport> PetPassports { get; set; }
-    
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlite($"Data Source={Environment.CurrentDirectory}/main.db;");
     }
-    
 }
